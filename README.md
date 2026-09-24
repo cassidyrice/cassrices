@@ -1,44 +1,38 @@
 # Cassrices
 
-Public ship log for completed projects.
+Mobile-first instant quotes for lawn care, house cleaning, and handyman visits. The visitor answers three short questions, sees a price, and can text or email the request.
 
 Site: <https://cassrices.com>
 
-## Add a shipped project
+## Run locally
 
-Copy the template:
+No build step. From the repo root:
 
 ```sh
-cp templates/project-post.md _posts/YYYY-MM-DD-project-slug.md
+python3 -m http.server 4173
 ```
 
-Fill in:
+Open <http://127.0.0.1:4173> and narrow the window to a phone width (about 390×844).
 
-- title
-- description
-- date
-- status
-- stack
-- demo/repo links when available
-- what shipped
-- next version
+Path: land → pick a service → answer three questions → read the quote → enter name, mobile, ZIP, and a time window → text, email, or copy the request.
 
-## Local structure
+Requests stay in this browser (`sessionStorage`) until a booking inbox is connected. Edit rates and questions in `assets/js/pricing.js`.
 
-```text
-_posts/                  shipped project posts
-_layouts/                Jekyll layouts
-assets/css/style.css     site styling
-templates/               reusable post template
-CNAME                    custom domain for GitHub Pages
+## Checks
+
+```sh
+node tests/pricing.test.js
 ```
 
 ## Deploy
 
-Push to `main`. GitHub Actions deploys the Jekyll site to GitHub Pages.
+Static files at the repository root. Publish directory is `/`. Build command is empty.
 
-Custom domain is configured by `CNAME`:
+Included for the platform:
 
-```text
-cassrices.com
-```
+- `index.html` — app
+- `assets/` — CSS, JS, icon
+- `CNAME` — `cassrices.com`
+- `.nojekyll` — skip Jekyll if a host would otherwise run it
+
+GitHub Pages still deploys from `main` via `.github/workflows/pages.yml`, which copies this root into the Pages artifact.
