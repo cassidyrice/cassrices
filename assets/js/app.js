@@ -91,10 +91,10 @@
   }
 
   function progress() {
-    if (state.screen === "home") return null;
     if (state.screen === "service") return { index: 1, total: 4 };
     if (state.screen === "question") return { index: state.step + 2, total: 4 };
-    return { index: 4, total: 4 };
+    if (state.screen === "quote" || state.screen === "details") return { index: 4, total: 4 };
+    return null;
   }
 
   function topbar(showBack) {
@@ -147,8 +147,9 @@
   }
 
   function homeScreen() {
+    var shortName = { lawn: "Lawn", cleaning: "Cleaning", handyman: "Repairs" };
     var from = pricing.serviceList().map(function (item) {
-      return item.name.replace(" care", "").replace("House ", "") + " from " + money(item.from);
+      return shortName[item.id] + " from " + money(item.from);
     }).join(" · ");
     var saved = state.request
       ? h("button", { class: "text-link", type: "button", "data-action": "view-request" },
