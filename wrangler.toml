@@ -1,5 +1,5 @@
 # Cloudflare Pages project for https://cassrices.com
-# Production deploys publish the job-quote static build and replace the live site.
+# The quote tool is a static site. There is no build. Publish the assembled root.
 name = "cassrices"
-pages_build_output_dir = "dist"
+pages_build_output_dir = "_site"
 compatibility_date = "2026-09-24"

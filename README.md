@@ -37,4 +37,4 @@ CNAME                    custom domain for GitHub Pages
 
 Production is Cloudflare Pages project `cassrices` on `https://cassrices.com`. Steps, secrets, and DNS checks are in [DEPLOY.md](DEPLOY.md).
 
-Pushing `main` or `tool/job-quote` runs **Deploy quote tool to Cloudflare Pages** and publishes the quote app build as the production deployment. The previous Jekyll GitHub Pages workflow is manual-only. `CNAME` stays until the Pages custom domains are verified, then it should be removed.
+Pushing `main` or `tool/job-quote` runs **Deploy quote tool to Cloudflare Pages** and publishes the static site root as-is (no npm build). The previous Jekyll GitHub Pages workflow is manual-only. `CNAME` stays until the Pages custom domains are verified, then it should be removed.

@@ -25,40 +25,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Build quote app
+      - name: Assemble static root
         run: |
-          if [ ! -f package.json ]; then
-            echo "package.json is missing. This workflow publishes the job-quote app, not the old Jekyll ship log."
+          if [ ! -f index.html ]; then
+            echo "index.html must be at the repo root. The quote tool is static and is uploaded as-is."
             exit 1
           fi
-          npm ci
-          npm run build
-
-      - name: Resolve build output
-        id: out
-        run: |
-          for d in dist build out .output/public; do
-            if [ -f "$d/index.html" ]; then
-              echo "dir=$d" >> "$GITHUB_OUTPUT"
-              echo "Publishing $d"
-              exit 0
-            fi
-          done
-          echo "No index.html in dist, build, out, or .output/public."
-          exit 1
+          mkdir -p _site/assets
+          cp index.html robots.txt sitemap.xml manifest.webmanifest _site/
+          if [ -f .nojekyll ]; then cp .nojekyll _site/; fi
+          if [ -f CNAME ]; then cp CNAME _site/; fi
+          cp -R assets/. _site/assets/
+          test -f _site/index.html
+          test -f _site/assets/js/app.js
+          test -f _site/assets/js/pricing.js
 
       - name: Deploy production to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy ${{ steps.out.outputs.dir }} --project-name=cassrices --branch=main
+          command: pages deploy _site --project-name=cassrices --branch=main
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Attach custom domains

@@ -29,15 +29,15 @@ The token available to this agent is not that token. Do not reuse account `d6738
 
 ## How production updates
 
-1. The job-quote app is on `tool/job-quote` (or merged to `main`). It must have `package.json`, `npm run build`, and `index.html` in `dist`, `build`, `out`, or `.output/public`.
+1. The job-quote app is a static site on `tool/job-quote` (or merged to `main`). `index.html` and `assets/` live at the repo root. There is no `package.json` and no build command.
 2. Push that branch, or merge to `main`. Workflow: **Deploy quote tool to Cloudflare Pages**.
-3. The workflow runs `npm ci`, `npm run build`, then:
+3. The workflow copies the static root into `_site` (`index.html`, `robots.txt`, `sitemap.xml`, `manifest.webmanifest`, `assets/`) and uploads it as-is:
 
    ```sh
-   npx wrangler pages deploy <output> --project-name=cassrices --branch=main
+   npx wrangler pages deploy _site --project-name=cassrices --branch=main
    ```
 
-   `--branch=main` is the Pages production branch, including when the git branch is `tool/job-quote`. That upload is the production artifact.
+   `--branch=main` is the Pages production branch, including when the git branch is `tool/job-quote`. That upload is the production artifact. Cloudflare Pages project settings, if created in the dashboard instead, are publish directory `/` and an empty build command.
 
 4. First-time custom domain (one time, after the secrets above exist). Run the workflow manually with **attach domains** checked. That calls the Pages domains API, which writes the proxied DNS records in the zone. It fails if the token’s account does not own `cassrices.com`. The same calls by hand:
 
@@ -58,7 +58,7 @@ The token available to this agent is not that token. Do not reuse account `d6738
 
    Wrangler 4 has no `pages domain` subcommand. Direct upload (`pages deploy`) still creates the project on first deploy.
 
-5. After both hostnames show the quote tool, delete the repo `CNAME` file so GitHub Pages stops claiming `cassrices.com`. The Jekyll workflow (`.github/workflows/pages.yml`) is manual-only so a later push does not republish the ship log.
+5. After both hostnames show the quote tool, delete the repo `CNAME` file so GitHub Pages stops claiming `cassrices.com`. On this branch, `.github/workflows/pages.yml` is manual-only. The app branch `tool/job-quote` still has a GitHub Pages workflow that publishes the same static root; Cloudflare Pages is the production cutover.
 
 ## Verify
 
