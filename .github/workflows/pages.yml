@@ -1,8 +1,8 @@
 name: Deploy site to GitHub Pages
 
+# Production is Cloudflare Pages (.github/workflows/deploy-cloudflare.yml).
+# This Jekyll workflow no longer runs on push, so it cannot republish the old ship log.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:

@@ -1,0 +1,5 @@
+# Cloudflare Pages project for https://cassrices.com
+# Production deploys publish the job-quote static build and replace the live site.
+name = "cassrices"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-09-24"

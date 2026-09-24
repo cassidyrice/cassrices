@@ -1,0 +1,81 @@
+name: Deploy quote tool to Cloudflare Pages
+
+on:
+  push:
+    branches: [main, tool/job-quote]
+  workflow_dispatch:
+    inputs:
+      attach_domains:
+        description: Attach cassrices.com and www.cassrices.com (zone must be in this Cloudflare account)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: cloudflare-pages-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Build quote app
+        run: |
+          if [ ! -f package.json ]; then
+            echo "package.json is missing. This workflow publishes the job-quote app, not the old Jekyll ship log."
+            exit 1
+          fi
+          npm ci
+          npm run build
+
+      - name: Resolve build output
+        id: out
+        run: |
+          for d in dist build out .output/public; do
+            if [ -f "$d/index.html" ]; then
+              echo "dir=$d" >> "$GITHUB_OUTPUT"
+              echo "Publishing $d"
+              exit 0
+            fi
+          done
+          echo "No index.html in dist, build, out, or .output/public."
+          exit 1
+
+      - name: Deploy production to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy ${{ steps.out.outputs.dir }} --project-name=cassrices --branch=main
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Attach custom domains
+        if: ${{ inputs.attach_domains }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          add_domain() {
+            code=$(curl -sS -o /tmp/cf-domain.json -w '%{http_code}' \
+              -X POST "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/cassrices/domains" \
+              -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              --data "{\"name\":\"$1\"}")
+            echo "Attach $1 -> HTTP $code"
+            python3 -c 'import json; d=json.load(open("/tmp/cf-domain.json")); print({k:d.get(k) for k in ("success","errors","messages")})'
+            test "$code" -lt 300
+          }
+          add_domain cassrices.com
+          add_domain www.cassrices.com
