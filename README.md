@@ -26,13 +26,13 @@ node tests/pricing.test.js
 
 ## Deploy
 
-Static files at the repository root. Publish directory is `/`. Build command is empty.
+Static files at the repository root. There is no `package.json` and no build command.
 
-Included for the platform:
+GitHub Pages (`.github/workflows/pages.yml`) and Cloudflare Pages (`.github/workflows/deploy-cloudflare.yml`) both copy this root into `_site` and publish that directory.
 
-- `index.html` — app
-- `assets/` — CSS, JS, icon
-- `CNAME` — `cassrices.com`
-- `.nojekyll` — skip Jekyll if a host would otherwise run it
+Cloudflare cutover still needs GitHub Actions secrets on the account that owns the `cassrices.com` zone:
 
-GitHub Pages still deploys from `main` via `.github/workflows/pages.yml`, which copies this root into the Pages artifact.
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+
+Do not merge a workflow that runs `npm ci` or `npm run build`. That path fails on this app.
