@@ -40,6 +40,32 @@ jobs:
           test -f _site/index.html
           test -f _site/assets/js/pricing.js
 
+      - name: Create Pages project if missing
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          code=$(curl -sS -o /tmp/cf-project.json -w '%{http_code}' \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/cassrices" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}")
+          echo "Lookup cassrices -> HTTP $code"
+          if [ "$code" -lt 300 ]; then
+            echo "Project already exists"
+            exit 0
+          fi
+          if [ "$code" != "404" ]; then
+            python3 -c 'import json; d=json.load(open("/tmp/cf-project.json")); print(d.get("errors"))'
+            exit 1
+          fi
+          code=$(curl -sS -o /tmp/cf-project.json -w '%{http_code}' \
+            -X POST "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data '{"name":"cassrices","production_branch":"main"}')
+          echo "Create cassrices -> HTTP $code"
+          python3 -c 'import json; d=json.load(open("/tmp/cf-project.json")); print({k:d.get(k) for k in ("success","errors")})'
+          test "$code" -lt 300
+
       - name: Deploy production to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
