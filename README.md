@@ -1,44 +1,38 @@
 # Cassrices
 
-Public ship log for completed projects.
+Mobile-first instant quotes for lawn care, house cleaning, and handyman visits. The visitor answers three short questions, sees a price, and can text or email the request.
 
 Site: <https://cassrices.com>
 
-## Add a shipped project
+## Run locally
 
-Copy the template:
+No build step. From the repo root:
 
 ```sh
-cp templates/project-post.md _posts/YYYY-MM-DD-project-slug.md
+python3 -m http.server 4173
 ```
 
-Fill in:
+Open <http://127.0.0.1:4173> and narrow the window to a phone width (about 390×844).
 
-- title
-- description
-- date
-- status
-- stack
-- demo/repo links when available
-- what shipped
-- next version
+Path: land → pick a service → answer three questions → read the quote → enter name, mobile, ZIP, and a time window → text, email, or copy the request.
 
-## Local structure
+Requests stay in this browser (`sessionStorage`) until a booking inbox is connected. Edit rates and questions in `assets/js/pricing.js`.
 
-```text
-_posts/                  shipped project posts
-_layouts/                Jekyll layouts
-assets/css/style.css     site styling
-templates/               reusable post template
-CNAME                    custom domain for GitHub Pages
+## Checks
+
+```sh
+node tests/pricing.test.js
 ```
 
 ## Deploy
 
-Push to `main`. GitHub Actions deploys the Jekyll site to GitHub Pages.
+Static files at the repository root. There is no `package.json` and no build command.
 
-Custom domain is configured by `CNAME`:
+GitHub Pages (`.github/workflows/pages.yml`) and Cloudflare Pages (`.github/workflows/deploy-cloudflare.yml`) both copy this root into `_site` and publish that directory.
 
-```text
-cassrices.com
-```
+Cloudflare cutover still needs GitHub Actions secrets on the account that owns the `cassrices.com` zone:
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+
+Do not merge a workflow that runs `npm ci` or `npm run build`. That path fails on this app.

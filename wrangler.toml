@@ -1,0 +1,5 @@
+# Cloudflare Pages project for https://cassrices.com
+# The app is static. GitHub Actions assembles _site and deploys that directory.
+name = "cassrices"
+pages_build_output_dir = "_site"
+compatibility_date = "2026-09-24"
