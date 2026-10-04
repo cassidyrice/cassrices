@@ -29,7 +29,8 @@ jobs:
               })
               try:
                   with urllib.request.urlopen(req) as resp:
-                      body=json.load(resp)
+                      raw=resp.read().decode()
+                      body=json.loads(raw) if raw.strip() else {"success": True, "result": None}
                       print(method, url.split("/client/v4/")[-1], resp.status, body.get("success"), body.get("errors"))
                       return body
               except urllib.error.HTTPError as e:
