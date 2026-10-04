@@ -1,0 +1,63 @@
+name: Point cassrices.com at Pages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  switch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Replace placeholder records and purge cache
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          auth="Authorization: Bearer ${CLOUDFLARE_API_TOKEN}"
+          zone=4ed8962b935c0a5da1f2692bcc2ea11d
+          curl -sS "https://api.cloudflare.com/client/v4/zones/${zone}/dns_records?per_page=100" -H "$auth" -o /tmp/dns.json
+          python3 - << 'PY'
+          import json, os, urllib.request
+          token=os.environ["CLOUDFLARE_API_TOKEN"]
+          zone="4ed8962b935c0a5da1f2692bcc2ea11d"
+          dns=json.load(open("/tmp/dns.json"))
+          targets={"cassrices.com","www.cassrices.com"}
+          for r in dns.get("result") or []:
+              if r.get("type")=="AAAA" and r.get("name") in targets and r.get("content")=="100::":
+                  req=urllib.request.Request(
+                      f"https://api.cloudflare.com/client/v4/zones/{zone}/dns_records/{r['id']}",
+                      method="DELETE",
+                      headers={"Authorization": f"Bearer {token}"})
+                  with urllib.request.urlopen(req) as resp:
+                      body=json.load(resp)
+                  print("deleted", r["name"], r["type"], body.get("success"), body.get("errors"))
+          for name in ("cassrices.com","www"):
+              payload=json.dumps({"type":"CNAME","name":name,"content":"cassrices.pages.dev","proxied":True}).encode()
+              req=urllib.request.Request(
+                  f"https://api.cloudflare.com/client/v4/zones/{zone}/dns_records",
+                  data=payload,
+                  method="POST",
+                  headers={"Authorization": f"Bearer {token}","Content-Type":"application/json"})
+              try:
+                  with urllib.request.urlopen(req) as resp:
+                      body=json.load(resp)
+                  print("created", name, body.get("success"), body.get("errors"))
+              except Exception as e:
+                  detail=e.read().decode() if hasattr(e,"read") else str(e)
+                  print("create-failed", name, detail[:500])
+          purge=json.dumps({"purge_everything":True}).encode()
+          req=urllib.request.Request(
+              f"https://api.cloudflare.com/client/v4/zones/{zone}/purge_cache",
+              data=purge,
+              method="POST",
+              headers={"Authorization": f"Bearer {token}","Content-Type":"application/json"})
+          with urllib.request.urlopen(req) as resp:
+              body=json.load(resp)
+          print("purge", body.get("success"), body.get("errors"))
+          PY
+          curl -sS "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/cassrices/domains" -H "$auth" \
+            | python3 -c 'import json,sys; d=json.load(sys.stdin); print("domains", d.get("success"));
+          [print("domain", {k:r.get(k) for k in ("name","status")}) for r in (d.get("result") or [])]'
