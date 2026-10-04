@@ -1,0 +1,49 @@
+name: Inspect cassrices DNS
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read Pages domains and DNS
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          auth="Authorization: Bearer ${CLOUDFLARE_API_TOKEN}"
+          curl -sS "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects" -H "$auth" -o /tmp/projects.json
+          curl -sS "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/cassrices/domains" -H "$auth" -o /tmp/domains.json
+          curl -sS "https://api.cloudflare.com/client/v4/zones?name=cassrices.com" -H "$auth" -o /tmp/zones.json
+          python3 - << 'PY'
+          import json
+          projects=json.load(open("/tmp/projects.json"))
+          print("projects", projects.get("success"), projects.get("errors"))
+          for p in projects.get("result") or []:
+              print("project", p.get("name"), p.get("subdomain"))
+          domains=json.load(open("/tmp/domains.json"))
+          print("domains", domains.get("success"), domains.get("errors"))
+          for r in domains.get("result") or []:
+              keep={k:r.get(k) for k in ("name","status","verification_data","validation_data")}
+              print("domain", keep)
+          zones=json.load(open("/tmp/zones.json"))
+          print("zones", zones.get("success"), zones.get("errors"))
+          for z in zones.get("result") or []:
+              print("zone", z.get("name"), z.get("id"), z.get("status"))
+          PY
+          zone=$(python3 -c 'import json; z=json.load(open("/tmp/zones.json")).get("result") or []; print(z[0]["id"] if z else "")')
+          if [ -n "$zone" ]; then
+            curl -sS "https://api.cloudflare.com/client/v4/zones/${zone}/dns_records?per_page=100" -H "$auth" -o /tmp/dns.json
+            python3 - << 'PY'
+          import json
+          dns=json.load(open("/tmp/dns.json"))
+          print("dns", dns.get("success"), dns.get("errors"))
+          for r in dns.get("result") or []:
+              print("record", r.get("type"), r.get("name"), r.get("content"), "proxied="+str(r.get("proxied")), r.get("id"))
+          PY
+          fi
