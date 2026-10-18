@@ -24,9 +24,9 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Assemble static site
         run: |
-          mkdir -p _site/assets
-          cp index.html robots.txt sitemap.xml CNAME .nojekyll manifest.webmanifest _site/
-          cp -R assets/. _site/assets/
+          mkdir -p _site
+          cp index.html _headers robots.txt sitemap.xml CNAME .nojekyll manifest.webmanifest _site/
+          cp -R assets quote thanks _site/
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

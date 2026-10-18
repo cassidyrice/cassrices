@@ -1,6 +1,7 @@
-name: Deploy quote tool to Cloudflare Pages
+name: Deploy site to Cloudflare Pages
 
-# The quote app is a static root (index.html + assets/). There is no package.json.
+# Static site (index.html, quote/, thanks/, assets/) plus Pages Functions in ./functions.
+# There is no package.json.
 # Do not npm ci / npm run build. Publish the assembled _site directory.
 
 on:
@@ -31,14 +32,16 @@ jobs:
       - name: Assemble static site
         run: |
           if [ ! -f index.html ]; then
-            echo "index.html is missing. This workflow publishes the static job-quote app, not a Node build."
+            echo "index.html is missing. This workflow publishes the static site, not a Node build."
             exit 1
           fi
-          mkdir -p _site/assets
-          cp index.html robots.txt sitemap.xml CNAME .nojekyll manifest.webmanifest _site/
-          cp -R assets/. _site/assets/
+          mkdir -p _site
+          cp index.html _headers robots.txt sitemap.xml CNAME .nojekyll manifest.webmanifest _site/
+          cp -R assets quote thanks _site/
           test -f _site/index.html
+          test -f _site/quote/index.html
           test -f _site/assets/js/pricing.js
+          test -f functions/api/sample-request.js
 
       - name: Create Pages project if missing
         env:

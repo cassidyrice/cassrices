@@ -1,5 +1,10 @@
 # Cloudflare Pages project for https://cassrices.com
-# The app is static. GitHub Actions assembles _site and deploys that directory.
+# Static site in _site (assembled by GitHub Actions) plus Pages Functions in ./functions.
 name = "cassrices"
 pages_build_output_dir = "_site"
 compatibility_date = "2026-09-24"
+
+# Free-sample request form submissions (functions/api/sample-request.js).
+[[kv_namespaces]]
+binding = "SAMPLE_REQUESTS"
+id = "376aced1bcc64852b3577532509b38c3"
