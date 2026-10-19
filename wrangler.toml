@@ -8,3 +8,8 @@ compatibility_date = "2026-09-24"
 [[kv_namespaces]]
 binding = "SAMPLE_REQUESTS"
 id = "376aced1bcc64852b3577532509b38c3"
+
+# Emails Cass about each new request (workers/sample-alert; deploy that Worker first).
+[[services]]
+binding = "SAMPLE_ALERT"
+service = "cassrices-sample-alert"
