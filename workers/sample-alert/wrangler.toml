@@ -1,0 +1,16 @@
+# Emails Cass when someone asks for a free sample on cassrices.com.
+# No public URL: only the cassrices Pages Function can call it (service binding SAMPLE_ALERT).
+# Deploy from this folder: npx wrangler deploy
+name = "cassrices-sample-alert"
+main = "index.js"
+compatibility_date = "2026-09-24"
+workers_dev = false
+preview_urls = false
+
+# Fixed recipient: the inbox the Flathead outreach is sent from. Keep both lines the same.
+[vars]
+ALERT_TO = "cassidyricecompany@gmail.com"
+
+[[send_email]]
+name = "ALERT_EMAIL"
+destination_address = "cassidyricecompany@gmail.com"

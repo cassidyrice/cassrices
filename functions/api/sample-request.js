@@ -1,6 +1,8 @@
 // Free-sample request form for cassrices.com.
 // Each valid submission is stored in the SAMPLE_REQUESTS KV namespace
-// under a key like "req:2026-10-18T07:12:00.000Z:<uuid>".
+// under a key like "req:2026-10-18T07:12:00.000Z:<uuid>", then Cass gets an email
+// through the SAMPLE_ALERT service binding (workers/sample-alert). A failed alert
+// never fails the form: the request is already saved in KV.
 
 const LIMITS = { business: 120, website: 300, email: 200, topic: 2000 };
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -25,7 +27,7 @@ async function readBody(request) {
   return Object.fromEntries(fd.entries());
 }
 
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost({ request, env, waitUntil }) {
   if (!env.SAMPLE_REQUESTS) return reply(request, 500, { ok: false, error: "Form storage is not set up yet." });
 
   let raw;
@@ -61,6 +63,16 @@ export async function onRequestPost({ request, env }) {
     metadata: { business: data.business.slice(0, 80), email: data.email, at },
   });
   await env.SAMPLE_REQUESTS.put(throttleKey, "1", { expirationTtl: 60 });
+
+  if (env.SAMPLE_ALERT) {
+    const alert = env.SAMPLE_ALERT.fetch("https://sample-alert/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(record),
+    }).then((r) => { if (!r.ok) console.error("sample alert returned", r.status); })
+      .catch((e) => console.error("sample alert failed", e && e.message));
+    if (waitUntil) waitUntil(alert); else await alert;
+  }
 
   return reply(request, 200, { ok: true, id });
 }

@@ -25,6 +25,17 @@ npx wrangler kv key list --namespace-id 376aced1bcc64852b3577532509b38c3 --prefi
 npx wrangler kv key get --namespace-id 376aced1bcc64852b3577532509b38c3 --remote "req:…"
 ```
 
+### Email alert
+
+Each saved request also emails `cassidyricecompany@gmail.com` (reply goes straight to the requester). The Pages Function calls the `cassrices-sample-alert` Worker in `workers/sample-alert/` through the `SAMPLE_ALERT` service binding; that Worker has no public URL and sends through Cloudflare Email Routing (`cassrices.com`, verified destination). A failed alert is logged and never fails the form. The Worker is deployed by hand, not by the Pages workflow:
+
+```sh
+cd workers/sample-alert && npx wrangler deploy
+npx wrangler tail cassrices-sample-alert   # watch alerts go out
+```
+
+To change the recipient, edit both `ALERT_TO` and `destination_address` in `workers/sample-alert/wrangler.toml` (the address must be verified in Email Routing).
+
 ## Run locally
 
 ```sh
@@ -36,6 +47,7 @@ npx wrangler pages dev _site
 
 ```sh
 node tests/pricing.test.js
+node tests/sample-alert.test.mjs
 ```
 
 ## Deploy
