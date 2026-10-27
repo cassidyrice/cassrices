@@ -35,7 +35,7 @@
       .then(function (res) {
         if (res.ok && res.j.ok) {
           form.reset();
-          say("Thanks! Your request is in. I’ll email you when your free sample is ready.", "ok");
+          say("Thanks! Your request is in. I’ll email you with your custom Option A & Option B preview links.", "ok");
         } else {
           say((res.j && res.j.error) || "Something went wrong. Please try again.", "err");
         }
